@@ -178,6 +178,35 @@ html[data-theme="dark"] .product-actions button{ background: rgba(11,16,32,.72);
 .product-actions button[aria-pressed="true"]{ background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.28); }
 .product-actions svg{ width: 18px; height: 18px; }
 
+/* Theme menu in header */
+.theme-wrap{ position: relative; }
+.theme-menu{
+  position: absolute;
+  right: 0;
+  top: 48px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+  box-shadow: var(--shadow);
+  min-width: 128px;
+  z-index: 200;
+}
+.theme-menu[aria-hidden="true"]{ display: none; }
+.theme-option{
+  background: transparent;
+  border: 0;
+  padding: 8px 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+  color: var(--text);
+}
+.theme-option:hover{ background: rgba(37,99,235,.06); }
+html[data-theme="dark"] .theme-menu{ background: rgba(11,16,32,.9); }
+
 .product-body{
   padding: 12px 12px 14px;
 }

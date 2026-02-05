@@ -72,9 +72,16 @@ function renderShell(){
               Sell
             </a>
 
-            <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle dark mode">
-              ${icon("shield")}
-            </button>
+            <div class="theme-wrap" style="position:relative;">
+              <button class="icon-btn" type="button" data-theme-toggle aria-haspopup="true" aria-expanded="false" aria-label="Theme options">
+                ${icon("shield")}
+              </button>
+              <div class="theme-menu" data-theme-menu aria-hidden="true" role="menu">
+                <button type="button" class="theme-option" data-theme-select="light" role="menuitem">Light</button>
+                <button type="button" class="theme-option" data-theme-select="dust" role="menuitem">Dust</button>
+                <button type="button" class="theme-option" data-theme-select="dark" role="menuitem">Dark</button>
+              </div>
+            </div>
 
             <a class="icon-btn" href="messages.html" aria-label="Messages">
               ${icon("bell")}
@@ -208,10 +215,32 @@ function initHeaderEffects(){
 
 function initThemeToggle(){
   const btn = qs("[data-theme-toggle]");
-  btn?.addEventListener("click", ()=>{
-    const cur = document.documentElement.getAttribute("data-theme") || "light";
-    setTheme(cur === "light" ? "dark" : "light");
-    toast({ title:"Theme updated", message:`Switched to ${cur === "light" ? "dark" : "light"} mode.` });
+  const menu = qs("[data-theme-menu]");
+
+  // Toggle menu visibility
+  btn?.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const expanded = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", expanded ? "false" : "true");
+    menu?.setAttribute("aria-hidden", expanded ? "true" : "false");
+  });
+
+  // Theme selection
+  on(document, "click", "[data-theme-select]", (e, t)=>{
+    e.preventDefault();
+    const theme = t.getAttribute("data-theme-select");
+    if(theme) setTheme(theme);
+    menu?.setAttribute("aria-hidden", "true");
+    btn?.setAttribute("aria-expanded", "false");
+    toast({ title:"Theme updated", message:`Switched to ${theme} mode.` });
+  });
+
+  // Click outside closes the menu
+  document.addEventListener("click", (e)=>{
+    if(!btn?.contains(e.target) && !menu?.contains(e.target)){
+      menu?.setAttribute("aria-hidden", "true");
+      btn?.setAttribute("aria-expanded", "false");
+    }
   });
 }
 

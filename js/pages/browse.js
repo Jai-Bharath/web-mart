@@ -12,16 +12,16 @@ function renderFilterOptions(){
   if(catEl){
     catEl.innerHTML = CATEGORIES.map(c=>`
       <label class="toggle" style="padding:10px 12px;">
+        <input type="checkbox" name="category" value="${escapeHtml(c.id)}" aria-label="Category ${escapeHtml(c.name)}" style="margin-right:10px;"/>
         <span>${escapeHtml(c.name)}</span>
-        <input type="checkbox" name="category" value="${escapeHtml(c.id)}" aria-label="Category ${escapeHtml(c.name)}"/>
       </label>
     `).join("");
   }
   if(condEl){
     condEl.innerHTML = CONDITIONS.map(c=>`
       <label class="toggle" style="padding:10px 12px;">
+        <input type="checkbox" name="condition" value="${escapeHtml(c)}" aria-label="Condition ${escapeHtml(c)}" style="margin-right:10px;"/>
         <span>${escapeHtml(c)}</span>
-        <input type="checkbox" name="condition" value="${escapeHtml(c)}" aria-label="Condition ${escapeHtml(c)}"/>
       </label>
     `).join("");
   }
