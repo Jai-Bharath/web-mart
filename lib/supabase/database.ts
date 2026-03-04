@@ -1,5 +1,13 @@
 import { supabase } from './client';
 
+// Helper to check if supabase is available
+function getSupabase() {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
+  }
+  return supabase;
+}
+
 // ==================== TYPE DEFINITIONS ====================
 export interface DBUser {
   id: string;
@@ -95,7 +103,7 @@ export interface CreateProductInput {
 
 // ==================== AUTH FUNCTIONS ====================
 export async function signUp(email: string, password: string, fullName: string) {
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await getSupabase().auth.signUp({
     email,
     password,
     options: {
@@ -107,7 +115,7 @@ export async function signUp(email: string, password: string, fullName: string) 
   
   // Create user profile
   if (data.user) {
-    await supabase.from('users').insert({
+    await getSupabase().from('users').insert({
       id: data.user.id,
       email,
       full_name: fullName,
@@ -119,7 +127,7 @@ export async function signUp(email: string, password: string, fullName: string) 
 }
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await getSupabase().auth.signInWithPassword({
     email,
     password
   });
@@ -129,18 +137,18 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await getSupabase().auth.signOut();
   if (error) throw error;
 }
 
 export async function getCurrentUser() {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user }, error } = await getSupabase().auth.getUser();
   if (error) throw error;
   
   if (!user) return null;
   
   // Get user profile
-  const { data: profile } = await supabase
+  const { data: profile } = await getSupabase()
     .from('users')
     .select('*')
     .eq('id', user.id)
@@ -150,7 +158,7 @@ export async function getCurrentUser() {
 }
 
 export function onAuthStateChange(callback: (user: any) => void) {
-  return supabase.auth.onAuthStateChange((_event, session) => {
+  return getSupabase().auth.onAuthStateChange((_event, session) => {
     callback(session?.user || null);
   });
 }
@@ -158,13 +166,13 @@ export function onAuthStateChange(callback: (user: any) => void) {
 // ==================== SELLER FUNCTIONS ====================
 export async function becomeSeller(userId: string, businessName: string, description: string) {
   // Update user role
-  await supabase
+  await getSupabase()
     .from('users')
     .update({ role: 'seller' })
     .eq('id', userId);
     
   // Create seller profile
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('sellers')
     .insert({
       user_id: userId,
@@ -179,7 +187,7 @@ export async function becomeSeller(userId: string, businessName: string, descrip
 }
 
 export async function getSellerProfile(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('sellers')
     .select('*')
     .eq('user_id', userId)
@@ -190,7 +198,7 @@ export async function getSellerProfile(userId: string) {
 }
 
 export async function updateSellerProfile(sellerId: string, updates: Partial<DBSeller>) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('sellers')
     .update(updates)
     .eq('id', sellerId)
@@ -203,7 +211,7 @@ export async function updateSellerProfile(sellerId: string, updates: Partial<DBS
 
 // ==================== PRODUCT FUNCTIONS ====================
 export async function createProduct(sellerId: string | null, product: CreateProductInput) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('products')
     .insert({
       seller_id: sellerId || null,
@@ -219,7 +227,7 @@ export async function createProduct(sellerId: string | null, product: CreateProd
 }
 
 export async function updateProduct(productId: string, updates: Partial<CreateProductInput>) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('products')
     .update({
       ...updates,
@@ -234,7 +242,7 @@ export async function updateProduct(productId: string, updates: Partial<CreatePr
 }
 
 export async function deleteProduct(productId: string) {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('products')
     .delete()
     .eq('id', productId);
@@ -243,7 +251,7 @@ export async function deleteProduct(productId: string) {
 }
 
 export async function getProduct(productId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('products')
     .select('*')
     .eq('id', productId)
@@ -252,7 +260,7 @@ export async function getProduct(productId: string) {
   if (error) throw error;
   
   // Increment view count
-  await supabase
+  await getSupabase()
     .from('products')
     .update({ view_count: (data.view_count || 0) + 1 })
     .eq('id', productId);
@@ -270,7 +278,7 @@ export async function getProducts(filters?: {
   limit?: number;
   offset?: number;
 }) {
-  let query = supabase.from('products').select('*');
+  let query = getSupabase().from('products').select('*');
   
   if (filters?.category) {
     query = query.eq('category', filters.category);
@@ -313,7 +321,7 @@ export async function getProducts(filters?: {
 }
 
 export async function getSellerProducts(sellerId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('products')
     .select('*')
     .eq('seller_id', sellerId)
@@ -332,7 +340,7 @@ export async function createOrder(order: {
   totalAmount: number;
   shippingAddress: DBOrder['shipping_address'];
 }) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('orders')
     .insert({
       buyer_id: order.buyerId,
@@ -358,7 +366,7 @@ export async function updateOrderStatus(orderId: string, status: DBOrder['status
   const updates: any = { status, updated_at: new Date().toISOString() };
   if (trackingNumber) updates.tracking_number = trackingNumber;
   
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('orders')
     .update(updates)
     .eq('id', orderId)
@@ -383,7 +391,7 @@ export async function updateOrderStatus(orderId: string, status: DBOrder['status
 }
 
 export async function getOrder(orderId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('orders')
     .select('*, product:products(*)')
     .eq('id', orderId)
@@ -394,7 +402,7 @@ export async function getOrder(orderId: string) {
 }
 
 export async function getBuyerOrders(buyerId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('orders')
     .select('*, product:products(*)')
     .eq('buyer_id', buyerId)
@@ -405,7 +413,7 @@ export async function getBuyerOrders(buyerId: string) {
 }
 
 export async function getSellerOrders(sellerId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('orders')
     .select('*, product:products(*), buyer:users!buyer_id(full_name, email)')
     .eq('seller_id', sellerId)
@@ -417,7 +425,7 @@ export async function getSellerOrders(sellerId: string) {
 
 // ==================== ORDER TRACKING FUNCTIONS ====================
 export async function createOrderTracking(orderId: string, status: string, description: string, location?: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('order_tracking')
     .insert({
       order_id: orderId,
@@ -434,7 +442,7 @@ export async function createOrderTracking(orderId: string, status: string, descr
 }
 
 export async function getOrderTracking(orderId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('order_tracking')
     .select('*')
     .eq('order_id', orderId)
@@ -446,7 +454,7 @@ export async function getOrderTracking(orderId: string) {
 
 // ==================== WISHLIST FUNCTIONS ====================
 export async function addToWishlist(userId: string, productId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('wishlists')
     .insert({ user_id: userId, product_id: productId })
     .select()
@@ -457,7 +465,7 @@ export async function addToWishlist(userId: string, productId: string) {
 }
 
 export async function removeFromWishlist(userId: string, productId: string) {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('wishlists')
     .delete()
     .match({ user_id: userId, product_id: productId });
@@ -466,7 +474,7 @@ export async function removeFromWishlist(userId: string, productId: string) {
 }
 
 export async function getWishlist(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('wishlists')
     .select('*, product:products(*)')
     .eq('user_id', userId);
@@ -483,7 +491,7 @@ export async function createReview(review: {
   title: string;
   content: string;
 }) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('reviews')
     .insert({
       product_id: review.productId,
@@ -500,7 +508,7 @@ export async function createReview(review: {
 }
 
 export async function getProductReviews(productId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('reviews')
     .select('*, user:users(full_name, avatar_url)')
     .eq('product_id', productId)
@@ -515,13 +523,13 @@ export async function uploadProductImage(file: File, productId: string) {
   const fileExt = file.name.split('.').pop();
   const fileName = `${productId}/${Date.now()}.${fileExt}`;
   
-  const { data, error } = await supabase.storage
+  const { data, error } = await getSupabase().storage
     .from('product-images')
     .upload(fileName, file);
     
   if (error) throw error;
   
-  const { data: { publicUrl } } = supabase.storage
+  const { data: { publicUrl } } = getSupabase().storage
     .from('product-images')
     .getPublicUrl(fileName);
     
@@ -532,7 +540,7 @@ export async function deleteProductImage(imageUrl: string) {
   const path = imageUrl.split('/product-images/')[1];
   if (!path) return;
   
-  const { error } = await supabase.storage
+  const { error } = await getSupabase().storage
     .from('product-images')
     .remove([path]);
     
