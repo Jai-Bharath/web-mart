@@ -21,14 +21,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useCartStore, useWishlistStore, useComparisonStore, useUIStore } from "@/lib/store";
+import { useCartStore, useWishlistStore, useComparisonStore, useUIStore, useAuthStore } from "@/lib/store";
 import { categories } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function Header() {
   const { totalItems, toggleCart } = useCartStore();
   const { productIds: wishlistIds } = useWishlistStore();
-  const { productIds: comparisonIds, toggleComparison } = useComparisonStore();
+  const { productIds: comparisonIds } = useComparisonStore();
+  const { user, logout } = useAuthStore();
   const { mobileMenuOpen, toggleMobileMenu, closeMobileMenu } = useUIStore();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showCategories, setShowCategories] = React.useState(false);
@@ -160,12 +162,12 @@ export function Header() {
               </Button>
 
               {/* Comparison */}
+              <Link href="/compare">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="relative"
-                  onClick={toggleComparison}
                 >
                   <BarChart2 className="h-5 w-5" />
                   {comparisonCount > 0 && (
@@ -175,6 +177,7 @@ export function Header() {
                   )}
                 </Button>
               </motion.div>
+              </Link>
 
               {/* Wishlist */}
               <Link href="/wishlist">
@@ -224,29 +227,71 @@ export function Header() {
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       className="absolute top-full right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
                     >
-                      <div className="p-4 border-b border-border">
-                        <p className="text-sm font-medium">Welcome to WebMart</p>
-                        <p className="text-xs text-muted-foreground">Sign in for best experience</p>
-                      </div>
-                      <div className="py-2">
-                        <Link href="/auth/login" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
-                          <User className="h-4 w-4" />
-                          <span>Sign In</span>
-                        </Link>
-                        <Link href="/auth/register" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
-                          <User className="h-4 w-4" />
-                          <span>Create Account</span>
-                        </Link>
-                        <div className="border-t border-border my-2" />
-                        <Link href="/orders" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
-                          <Package className="h-4 w-4" />
-                          <span>My Orders</span>
-                        </Link>
-                        <Link href="/seller/dashboard" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
-                          <Store className="h-4 w-4" />
-                          <span>Seller Dashboard</span>
-                        </Link>
-                      </div>
+                      {user ? (
+                        <>
+                          <div className="p-4 border-b border-border">
+                            <p className="text-sm font-medium">{user.fullName}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                          </div>
+                          <div className="py-2">
+                            <Link href="/orders" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
+                              <Package className="h-4 w-4" />
+                              <span>My Orders</span>
+                            </Link>
+                            <Link href="/wishlist" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
+                              <Heart className="h-4 w-4" />
+                              <span>Wishlist</span>
+                            </Link>
+                            <Link href="/track" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
+                              <Package className="h-4 w-4" />
+                              <span>Track Order</span>
+                            </Link>
+                            {user.role === "seller" && (
+                              <Link href="/seller/dashboard" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
+                                <Store className="h-4 w-4" />
+                                <span>Seller Dashboard</span>
+                              </Link>
+                            )}
+                            <div className="border-t border-border my-2" />
+                            <button
+                              onClick={() => {
+                                logout();
+                                toast.success("Signed out successfully");
+                              }}
+                              className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors w-full text-left text-destructive"
+                            >
+                              <LogOut className="h-4 w-4" />
+                              <span>Sign Out</span>
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="p-4 border-b border-border">
+                            <p className="text-sm font-medium">Welcome to WebMart</p>
+                            <p className="text-xs text-muted-foreground">Sign in for best experience</p>
+                          </div>
+                          <div className="py-2">
+                            <Link href="/auth/login" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
+                              <User className="h-4 w-4" />
+                              <span>Sign In</span>
+                            </Link>
+                            <Link href="/auth/register" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
+                              <User className="h-4 w-4" />
+                              <span>Create Account</span>
+                            </Link>
+                            <div className="border-t border-border my-2" />
+                            <Link href="/orders" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
+                              <Package className="h-4 w-4" />
+                              <span>My Orders</span>
+                            </Link>
+                            <Link href="/seller/dashboard" className="flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors">
+                              <Store className="h-4 w-4" />
+                              <span>Seller Dashboard</span>
+                            </Link>
+                          </div>
+                        </>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>

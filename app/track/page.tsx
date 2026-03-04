@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Package,
@@ -67,9 +68,32 @@ const mockOrders = [
 ];
 
 export default function TrackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <TrackPageContent />
+    </Suspense>
+  );
+}
+
+function TrackPageContent() {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [trackedOrder, setTrackedOrder] = React.useState<(typeof mockOrders)[0] | null>(null);
   const [isSearching, setIsSearching] = React.useState(false);
+
+  // Auto-search if order ID is in URL
+  React.useEffect(() => {
+    const urlId = searchParams.get("id");
+    if (urlId) {
+      setSearchQuery(urlId.toUpperCase());
+      const order = mockOrders.find(
+        (o) => o.id.toLowerCase() === urlId.toLowerCase()
+      );
+      if (order) {
+        setTrackedOrder(order);
+      }
+    }
+  }, [searchParams]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
